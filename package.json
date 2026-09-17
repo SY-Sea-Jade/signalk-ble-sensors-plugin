@@ -1,0 +1,58 @@
+{
+  "name": "signalk-ble-sensors-plugin",
+  "version": "0.1.0",
+  "description": "Passive BLE sensor listening for SignalK (SwitchBot, RuuviTag, and others) via the SignalK BLE Manager API — no GATT connection required.",
+  "keywords": [
+    "ble",
+    "bluetooth",
+    "environment",
+    "humidity",
+    "marine",
+    "ruuvitag",
+    "sensors",
+    "signalk",
+    "signalk-category-hardware",
+    "signalk-node-plugin",
+    "signalk-node-server-plugin",
+    "switchbot",
+    "temperature"
+  ],
+  "homepage": "https://github.com/SY-Sea-Jade/signalk-ble-sensors-plugin",
+  "bugs": {
+    "url": "https://github.com/SY-Sea-Jade/signalk-ble-sensors-plugin/issues"
+  },
+  "license": "Apache-2.0",
+  "author": "Jey Burrows",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SY-Sea-Jade/signalk-ble-sensors-plugin.git"
+  },
+  "files": [
+    "index.js",
+    "lib/",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
+    "lint": "oxlint",
+    "test": "node --test",
+    "test:coverage": "node --experimental-test-coverage --test-coverage-include=\"lib/**/*.js\" --test-coverage-exclude=\"lib/sensor-manager.js\" --test-coverage-lines=80 --test-coverage-branches=80 --test-coverage-functions=80 --test"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "oxfmt": "^0.61.0",
+    "oxlint": "^1.75.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "signalk-server": ">=2.31.0"
+  },
+  "signalk": {
+    "displayName": "BLE Sensors (Passive)"
+  },
+  "signalk-plugin-enabled-by-default": false
+}

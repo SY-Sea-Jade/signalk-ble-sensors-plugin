@@ -1,0 +1,13 @@
+# signalk-bluetti-plugin Development
+
+## Release
+
+```bash
+npm login
+git tag -f latest
+git tag -f latest v0.5.0
+git push --tags --force
+npm publish --tag latest --access public
+```
+
+GitHub release
