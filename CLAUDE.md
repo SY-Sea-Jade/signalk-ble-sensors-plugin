@@ -65,6 +65,15 @@ Each registered sensor also gets a simple no-contact watchdog: if no advertiseme
 `NO_CONTACT_MS` (5 minutes — several times the typical multi-second advertisement interval for these
 sensors), its `reachable` path is set `false`.
 
+A registered sensor whose decoder declares `providesPressure: true` (currently only `ruuvitag`) can
+optionally be designated the plugin-level `outsidePressureSource` (a MAC, set via the config screen's
+top-level dropdown — see "Config screen"). Its pressure reading is then cross-published to
+`environment.outside.pressure` — the SignalK-spec path other plugins (barometer trend, etc.) expect,
+which already has server-provided units metadata — in addition to its own `environment.<zone>.pressure`.
+This is a plain extra `values` entry appended in `_publish()`, not routed through `path-mapper.js`'s
+templating, since the target path is fixed rather than per-sensor; it's skipped when the sensor's own
+zone already resolves to `outside`, to avoid publishing the identical path twice in one update.
+
 ### Module responsibilities
 
 - **`index.js`** — Plugin lifecycle (`start`/`stop`) and config schema. `plugin.schema` is a function (not
@@ -84,7 +93,10 @@ decode(adv) }` with no BLE or SignalK dependencies (trivially unit-testable agai
   Currently: `switchbot-th` (SwitchBot Meter / WoSensorTH), `switchbot-meter-plus` (SwitchBot Meter Plus),
   `ruuvitag` (RuuviTag data format 5), `xiaomi-atc` (Xiaomi LYWSD03MMC running the pvvx/atc1441 custom
   firmware), `govee` (Govee H5074/H5075). SwitchBot and RuuviTag are the actively-used/best-tested pair;
-  the rest are best-effort community coverage.
+  the rest are best-effort community coverage. A decoder may also declare `providesPressure: true` (a
+  static capability flag, not derived from what a given device has actually reported — some RuuviTag
+  hardware variants, e.g. the Pro IP68, never emit a pressure value at all) — see `outsidePressureSource`
+  above.
 
 - **`lib/path-mapper.js`** — SignalK path templates, units, and battery-low zones, plus the `{zone}`/
   `{sensorId}` substitution and delta-building logic. The path/unit conventions themselves (e.g.
@@ -119,6 +131,11 @@ A registered sensor's `zone` (used in `environment.<zone>.*` paths) and `name` (
 sanitized/lowercased, in `sensors.<name>.*` paths — so two registered sensors sharing a name will collide
 on these paths) are free-text fields the user fills in after picking the MAC — the plugin
 doesn't try to infer either.
+
+Above the `sensors` array sits one plugin-level field, `outsidePressureSource`: an optional `enum`/`enumNames`
+dropdown built the same way as the per-item `mac` field, but filtered to recognized devices whose decoder
+declares `providesPressure`. Picking a MAC here doesn't register it — it still needs its own `sensors` array
+entry — so the schema description says so explicitly.
 
 ### Why BLE-Manager-only
 

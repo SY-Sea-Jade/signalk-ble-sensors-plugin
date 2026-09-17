@@ -22,6 +22,11 @@ test("identifySensorType", async (t) => {
     assert.equal(identifySensorType(adv).id, "ruuvitag");
   });
 
+  await t.test("only ruuvitag declares providesPressure (the outsidePressureSource dropdown's filter)", () => {
+    const providers = decoders.filter((d) => d.providesPressure).map((d) => d.id);
+    assert.deepEqual(providers, ["ruuvitag"]);
+  });
+
   await t.test("distinguishes SwitchBot Meter from Meter Plus by model byte", () => {
     const th = {
       name: "",

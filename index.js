@@ -26,7 +26,7 @@ module.exports = function (app) {
 
     const SensorManager = require("./lib/sensor-manager");
     manager = new SensorManager(app, plugin.id, (msg) => app.debug(msg));
-    manager.configure(options.sensors);
+    manager.configure(options);
 
     try {
       manager.start();
@@ -67,10 +67,22 @@ function formatDeviceLabel(d) {
 function buildSchema(recognized) {
   const known = recognized.slice().sort((a, b) => a.mac.localeCompare(b.mac));
   const hasKnown = known.length > 0;
+  const pressureCapable = known.filter((d) => d.providesPressure);
+  const hasPressureCapable = pressureCapable.length > 0;
 
   return {
     type: "object",
     properties: {
+      outsidePressureSource: {
+        type: "string",
+        title: "Outside pressure source",
+        description:
+          "Optional. Also publish this sensor's pressure reading to environment.outside.pressure — the SignalK-standard path other plugins (e.g. barometer trend) expect — in addition to its own environment.<zone>.pressure. Only sensors capable of measuring pressure (e.g. RuuviTag) are listed here; the device must also be added as a registered sensor below to actually be read.",
+        enum: hasPressureCapable ? ["", ...pressureCapable.map((d) => d.mac)] : [""],
+        enumNames: hasPressureCapable
+          ? ["(none)", ...pressureCapable.map(formatDeviceLabel)]
+          : ["No pressure-capable sensors detected yet"],
+      },
       sensors: {
         type: "array",
         title: "Registered sensors",

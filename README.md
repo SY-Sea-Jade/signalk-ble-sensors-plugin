@@ -36,19 +36,27 @@ Stock Xiaomi firmware (encrypted, not the ATC/pvvx custom firmware above) isn't 
 5. Fill in a **Zone / location** (e.g. `cabin`, `fridge`, `engine`) — this becomes part of the SignalK path (`environment.<zone>.temperature`, etc.); dots nest into sub-paths, e.g. `inside.mainCabin` becomes `environment.inside.mainCabin.temperature` — and optionally a **Name override**.
 6. Save. Readings should start appearing within a few seconds.
 
+If a sensor measures pressure (currently RuuviTag only), it can optionally also be picked as the **Outside pressure source**
+(a plugin-level setting, above "Registered sensors") to additionally publish its reading to `environment.outside.pressure` —
+the SignalK-standard path other plugins (e.g. barometer trend) expect — alongside its own `environment.<zone>.pressure`. The
+sensor still needs to be added under "Registered sensors" as usual; picking it here doesn't register it on its own.
+
 ## Published paths
 
 | Value            | Path                              | Unit                                |
 | ---------------- | --------------------------------- | ----------------------------------- |
 | Temperature      | `environment.<zone>.temperature`  | K                                   |
 | Humidity         | `environment.<zone>.humidity`     | ratio (0-1)                         |
+| Pressure         | `environment.<zone>.pressure`     | Pa                                  |
 | Battery strength | `sensors.<name>.battery.strength` | ratio (0-1), with low-battery zones |
 | Battery voltage  | `sensors.<name>.battery.voltage`  | V                                   |
 | Signal strength  | `sensors.<name>.RSSI`             | dB                                  |
 | Reachable        | `sensors.<name>.reachable`        | boolean                             |
+| Motion counter   | `sensors.<name>.motionCounter`    | count                               |
 
 `<name>` is the sensor's name, lowercased and sanitized — give each registered sensor a distinct name, since
-two sensors with the same name will collide on these paths.
+two sensors with the same name will collide on these paths. Not every sensor publishes every path above — only the values its
+decoder actually supports (e.g. only RuuviTag currently reports pressure and a motion counter).
 
 These path and unit conventions are reused from
 [bt-sensors-plugin-sk](https://github.com/naugehyde/bt-sensors-plugin-sk) so this plugin's output lines up with dashboards or alarms already built against that plugin's paths.
