@@ -33,7 +33,7 @@ Stock Xiaomi firmware (encrypted, not the ATC/pvvx custom firmware above) isn't 
 2. Make sure the sensor is powered on and within Bluetooth range for a minute or two.
 3. Open the plugin's configuration page and click **+ Add Item** under "Registered sensors".
 4. Pick the sensor from the **Device** dropdown — it lists every recognised sensor the plugin has seen, labelled with its advertised name, sensor type, and MAC address. If it's not there yet, close the page, wait a bit longer, and reopen it.
-5. Fill in a **Zone / location** (e.g. `cabin`, `fridge`, `engine`) — this becomes part of the SignalK path (`environment.<zone>.temperature`, etc.) — and optionally a **Name override**.
+5. Fill in a **Zone / location** (e.g. `cabin`, `fridge`, `engine`) — this becomes part of the SignalK path (`environment.<zone>.temperature`, etc.); dots nest into sub-paths, e.g. `inside.mainCabin` becomes `environment.inside.mainCabin.temperature` — and optionally a **Name override**.
 6. Save. Readings should start appearing within a few seconds.
 
 ## Published paths

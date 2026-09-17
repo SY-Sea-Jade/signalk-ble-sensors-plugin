@@ -2,7 +2,7 @@
 
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
-const { resolvePath, sensorId, sanitize, buildDelta, buildMetaDelta, FIELD_PATHS } = require("../lib/path-mapper");
+const { resolvePath, sensorId, sanitize, sanitizeZone, buildDelta, buildMetaDelta, FIELD_PATHS } = require("../lib/path-mapper");
 
 test("sanitize", async (t) => {
   await t.test("replaces non-alphanumeric runs with a single underscore and trims edges", () => {
@@ -21,9 +21,39 @@ test("sensorId", async (t) => {
   });
 });
 
+test("sanitizeZone", async (t) => {
+  await t.test("sanitizes a plain zone", () => {
+    assert.equal(sanitizeZone("engine room"), "engine_room");
+  });
+
+  await t.test("keeps dots as nested path segments", () => {
+    assert.equal(sanitizeZone("inside.mainCabin"), "inside.mainCabin");
+  });
+
+  await t.test("sanitizes each dot-separated segment independently", () => {
+    assert.equal(sanitizeZone("inside!.main cabin"), "inside.main_cabin");
+  });
+
+  await t.test("drops empty segments from consecutive or stray dots", () => {
+    assert.equal(sanitizeZone(".inside..cabin."), "inside.cabin");
+  });
+
+  await t.test("defaults to 'unknown' when not provided or empty after sanitizing", () => {
+    assert.equal(sanitizeZone(""), "unknown");
+    assert.equal(sanitizeZone("..."), "unknown");
+  });
+});
+
 test("resolvePath", async (t) => {
   await t.test("substitutes {zone}", () => {
     assert.equal(resolvePath(FIELD_PATHS.temp.path, { zone: "engine room", name: "Sensor" }), "environment.engine_room.temperature");
+  });
+
+  await t.test("nests dotted zones", () => {
+    assert.equal(
+      resolvePath(FIELD_PATHS.temp.path, { zone: "inside.mainCabin", name: "Sensor" }),
+      "environment.inside.mainCabin.temperature",
+    );
   });
 
   await t.test("defaults zone to 'unknown' when not provided", () => {

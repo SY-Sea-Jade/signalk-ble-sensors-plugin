@@ -71,20 +71,27 @@ function buildSchema(recognized) {
               type: "string",
               title: "Device",
               enum: hasKnown ? known.map((d) => d.mac) : [""],
+              // adv.name is frequently blank for these sensors — SwitchBot and RuuviTag
+              // decode entirely from manufacturer/service data and don't depend on the
+              // BLE advertised name, which many providers never surface anyway (it's
+              // typically only present in a scan response, not the primary advertising
+              // packet). Drop the name segment rather than showing a literal placeholder.
               enumNames: hasKnown
-                ? known.map((d) => `${d.name || "(unnamed)"} — ${d.sensorTypeName} (${d.mac})`)
+                ? known.map((d) => (d.name ? `${d.name} — ${d.sensorTypeName} (${d.mac})` : `${d.sensorTypeName} (${d.mac})`))
                 : ["No recognised sensors detected yet"],
             },
             name: {
               type: "string",
               title: "Name override",
-              description: "Used as the SignalK $source and in generated sensor paths. Defaults to the device's advertised name.",
+              description:
+                "Used as the SignalK $source and in generated sensor paths. Defaults to the device's advertised name if it has one, otherwise its sensor type (e.g. 'SwitchBot Meter') — worth setting explicitly.",
             },
             zone: {
               type: "string",
               title: "Zone / location",
-              description: "Used in environment.<zone>.* paths, e.g. 'cabin', 'engine', 'fridge'.",
-              examples: ["inside", "outside", "galley", "fridge", "cabin", "engine", "deck", "cockpit"],
+              description:
+                "Used in environment.<zone>.* paths, e.g. 'cabin', 'engine', 'fridge'. Dots nest into sub-paths, e.g. 'inside.mainCabin' becomes environment.inside.mainCabin.*.",
+              examples: ["inside", "outside", "galley", "fridge", "cabin", "engine", "deck", "cockpit", "inside.mainCabin"],
             },
             enabled: { type: "boolean", title: "Enabled", default: true },
           },
