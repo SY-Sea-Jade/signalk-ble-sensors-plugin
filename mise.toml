@@ -1,2 +1,5 @@
 [tools]
 gh = "latest"
+node = "latest"
+npm = "latest"
+pre-commit = "latest"
