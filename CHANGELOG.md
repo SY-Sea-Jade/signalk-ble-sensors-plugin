@@ -1,3 +1,8 @@
+# [0.1.4]
+
+Improved handling of Switchbot (Woan) thermometers with rolling codes in payload
+Fix missing devices in registration dropdown
+
 # [0.1.3]
 
 Optionally re-publish a pressure value as `environment.outside.pressure` to cope with IP68 RuuviTag Pro that doesn't capture pressure, and re-use near enough value from an indoor standard RuuviTag.

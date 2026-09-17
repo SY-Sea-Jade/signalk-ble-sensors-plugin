@@ -127,6 +127,16 @@ in Bluetooth range) before it can be selected — the schema's `description` say
 seen yet the dropdown falls back to a single disabled-looking placeholder entry (an empty `enum` array is
 invalid JSON Schema).
 
+`getRecognizedDevices()` is runtime-only and resets on every plugin restart, while a MAC already saved in
+`options.sensors` persists across restarts — so without help, a registered sensor's MAC would vanish from
+the dropdown's `enum` (and look like data loss) until it happened to broadcast again post-restart.
+`index.js`'s `mergeKnownWithConfigured()` merges `getConfiguredDevices()`/`getOutsidePressureSourceMac()`
+(sensor-manager's view of `options.sensors` / `options.outsidePressureSource`) into the known-devices list
+for any MAC not already recognized this session, so a saved selection always stays selectable. Merged-in
+entries have no `sensorTypeName` (only learned by decoding an actual advertisement) — `formatDeviceLabel()`
+falls back to "not seen since restart" — and default `providesPressure: false`, so they can't wrongly
+appear in the pressure-source dropdown until re-observed confirms what they actually are.
+
 A registered sensor's `zone` (used in `environment.<zone>.*` paths) and `name` (used as `$source` and,
 sanitized/lowercased, in `sensors.<name>.*` paths — so two registered sensors sharing a name will collide
 on these paths) are free-text fields the user fills in after picking the MAC — the plugin

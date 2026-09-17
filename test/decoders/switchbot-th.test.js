@@ -25,13 +25,15 @@ function adv({ md, battery, mac } = {}) {
 
 // Some firmware/chip revisions prefix manufacturerData with the device's own
 // MAC (6 bytes) instead of the model byte at offset 0 — see identify()'s
-// comment in the decoder. Payload after the MAC: [deviceTypeId, status, frac,
-// signAndInt, humidity, trailing] (6 bytes), keeping the buffer at 12 bytes
-// total, same as the no-MAC-prefix format.
-function buildMacPrefixedManufacturerData({ mac, deviceTypeId = 0x74, fracDigit = 0, sign = 1, intPart = 0, humidity = 0 } = {}) {
+// comment in the decoder. Payload after the MAC: [rollingCounter, status,
+// frac, signAndInt, humidity, trailing] (6 bytes), keeping the buffer at 12
+// bytes total, same as the no-MAC-prefix format. Byte 6 (rollingCounter) is
+// intentionally not a stable discriminator — it's observed to change between
+// advertisements from the same device — so tests exercise arbitrary values.
+function buildMacPrefixedManufacturerData({ mac, rollingCounter = 0x74, fracDigit = 0, sign = 1, intPart = 0, humidity = 0 } = {}) {
   const md = Buffer.alloc(12);
   Buffer.from(mac.replace(/:/g, ""), "hex").copy(md, 0);
-  md[6] = deviceTypeId;
+  md[6] = rollingCounter;
   md[8] = fracDigit & 0x0f;
   md[9] = (sign > 0 ? 0x80 : 0) | (intPart & 0x7f);
   md[10] = humidity & 0x7f;
@@ -55,20 +57,15 @@ test("switchbot-th identify", async (t) => {
     assert.equal(switchbotTh.identify({ manufacturerData: new Map() }), false);
   });
 
-  await t.test("true for a MAC-prefixed variant with the 'Add Mode' device-type byte (0x74)", () => {
+  await t.test("true for a MAC-prefixed variant, regardless of byte 6's value", () => {
     const mac = "E7:76:40:86:35:86";
-    const md = buildMacPrefixedManufacturerData({ mac, deviceTypeId: 0x74 });
-    assert.equal(switchbotTh.identify(adv({ md, mac })), true);
-  });
-
-  await t.test("true for a MAC-prefixed variant with the 'Normal Mode' device-type byte (0x54)", () => {
-    const mac = "E7:76:40:86:35:86";
-    const md = buildMacPrefixedManufacturerData({ mac, deviceTypeId: 0x54 });
-    assert.equal(switchbotTh.identify(adv({ md, mac })), true);
+    assert.equal(switchbotTh.identify(adv({ md: buildMacPrefixedManufacturerData({ mac, rollingCounter: 0x74 }), mac })), true);
+    assert.equal(switchbotTh.identify(adv({ md: buildMacPrefixedManufacturerData({ mac, rollingCounter: 0x75 }), mac })), true);
+    assert.equal(switchbotTh.identify(adv({ md: buildMacPrefixedManufacturerData({ mac, rollingCounter: 0x00 }), mac })), true);
   });
 
   await t.test("false for a MAC-prefixed variant when the leading bytes don't match the advertisement's MAC", () => {
-    const md = buildMacPrefixedManufacturerData({ mac: "E7:76:40:86:35:86", deviceTypeId: 0x74 });
+    const md = buildMacPrefixedManufacturerData({ mac: "E7:76:40:86:35:86", rollingCounter: 0x74 });
     assert.equal(switchbotTh.identify(adv({ md, mac: "AA:BB:CC:DD:EE:FF" })), false);
   });
 });
@@ -106,9 +103,17 @@ test("switchbot-th decode", async (t) => {
 
   await t.test("decodes temp/humidity for a MAC-prefixed variant (same byte offsets as the no-MAC format)", () => {
     const mac = "E7:76:40:86:35:86";
-    const md = buildMacPrefixedManufacturerData({ mac, deviceTypeId: 0x74, sign: 1, intPart: 13, fracDigit: 8, humidity: 0x63 });
+    const md = buildMacPrefixedManufacturerData({ mac, rollingCounter: 0x74, sign: 1, intPart: 13, fracDigit: 8, humidity: 0x63 });
     const values = switchbotTh.decode(adv({ md, mac }));
     assert.equal(values.temp, 286.95); // 273.15 + 13.8
     assert.equal(values.humidity, 0.99); // 0x63 = 99
+  });
+
+  await t.test("decodes the same temp/humidity for a MAC-prefixed variant regardless of the rolling counter byte", () => {
+    const mac = "E7:76:40:86:35:86";
+    const md = buildMacPrefixedManufacturerData({ mac, rollingCounter: 0x75, sign: 1, intPart: 13, fracDigit: 8, humidity: 0x63 });
+    const values = switchbotTh.decode(adv({ md, mac }));
+    assert.equal(values.temp, 286.95);
+    assert.equal(values.humidity, 0.99);
   });
 });

@@ -13,7 +13,9 @@ module.exports = function (app) {
 
   plugin.schema = function () {
     const recognized = manager ? manager.getRecognizedDevices() : [];
-    return buildSchema(recognized);
+    const configured = manager ? manager.getConfiguredDevices() : [];
+    const outsidePressureSourceMac = manager ? manager.getOutsidePressureSourceMac() : null;
+    return buildSchema(recognized, configured, outsidePressureSourceMac);
   };
 
   plugin.start = function (options = {}) {
@@ -50,6 +52,10 @@ module.exports = function (app) {
   return plugin;
 };
 
+function normalizeMac(mac) {
+  return String(mac).toLowerCase();
+}
+
 // adv.name is frequently blank for these sensors — SwitchBot and RuuviTag
 // decode entirely from manufacturer/service data and don't depend on the BLE
 // advertised name, which many providers never surface anyway (it's typically
@@ -57,17 +63,48 @@ module.exports = function (app) {
 // the name segment rather than showing a literal placeholder. RSSI is
 // appended as a live disambiguator: with a neighboring boat's identical
 // sensor model also in range, the stronger (less negative) signal is
-// generally the one actually on this boat.
+// generally the one actually on this boat. sensorTypeName is only known once
+// a device's advertisement has actually been decoded — a registered MAC not
+// yet re-observed since the plugin last started (see mergeKnownWithConfigured
+// below) won't have one.
 function formatDeviceLabel(d) {
   const namePart = d.name ? `${d.name} — ` : "";
+  const typePart = d.sensorTypeName || "not seen since restart";
   const rssiPart = d.rssi === undefined || d.rssi === null ? "" : ` · ${d.rssi}dBm`;
-  return `${namePart}${d.sensorTypeName} (${d.mac})${rssiPart}`;
+  return `${namePart}${typePart} (${d.mac})${rssiPart}`;
 }
 
-function buildSchema(recognized) {
-  const known = recognized.slice().sort((a, b) => a.mac.localeCompare(b.mac));
+// _recognized (and therefore getRecognizedDevices()) is runtime-only and
+// resets on every plugin restart, while a MAC already saved in options.sensors
+// persists across restarts. Without this merge, a registered sensor's MAC
+// would vanish from the dropdown's enum until it happened to broadcast again,
+// making an already-saved selection look like it disappeared even though
+// it's still in the config. Merged-in entries carry no sensorTypeName (we
+// only learn that by decoding an actual advertisement) or providesPressure
+// (safe default: false, so they can't wrongly appear in the pressure-source
+// dropdown until re-observed confirms what they are).
+function mergeKnownWithConfigured(recognized, configured) {
+  const byMac = new Map(recognized.map((d) => [normalizeMac(d.mac), d]));
+  for (const c of configured) {
+    if (!c || !c.mac || byMac.has(normalizeMac(c.mac))) continue;
+    byMac.set(normalizeMac(c.mac), { mac: c.mac, name: c.name, sensorTypeName: null, providesPressure: false, rssi: undefined });
+  }
+  return [...byMac.values()];
+}
+
+function buildSchema(recognized, configured = [], outsidePressureSourceMac = null) {
+  const known = mergeKnownWithConfigured(recognized, configured).sort((a, b) => a.mac.localeCompare(b.mac));
   const hasKnown = known.length > 0;
-  const pressureCapable = known.filter((d) => d.providesPressure);
+
+  let pressureCapable = known.filter((d) => d.providesPressure);
+  // Same rationale as above, for the single outsidePressureSource pick: keep
+  // it selectable even if the device hasn't re-confirmed its pressure
+  // capability since the last restart.
+  if (outsidePressureSourceMac && !pressureCapable.some((d) => normalizeMac(d.mac) === normalizeMac(outsidePressureSourceMac))) {
+    pressureCapable = [...pressureCapable, { mac: outsidePressureSourceMac, name: null, sensorTypeName: null, rssi: undefined }].sort(
+      (a, b) => a.mac.localeCompare(b.mac),
+    );
+  }
   const hasPressureCapable = pressureCapable.length > 0;
 
   return {
