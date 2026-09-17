@@ -1,6 +1,6 @@
 # signalk-ble-sensors-plugin
 
-ALPHA
+BETA - This is built for one person's boat, so has limited sensor support, and intended as stop-gap until `bt-sensors-plugin-sk` has BLE Manager support.
 
 Passive BLE sensor listening for [SignalK](https://signalk.org/) — reads temperature, humidity and battery data broadcast by cheap, popular BLE sensors and republishes it to SignalK paths, without ever opening a Bluetooth connection to the device. Relies only on _BLE Manager_, so requires SignalK v2.31 or above.
 
