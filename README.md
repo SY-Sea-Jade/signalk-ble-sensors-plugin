@@ -4,8 +4,7 @@ BETA - This is built for one person's boat, so has limited sensor support, and i
 
 Passive BLE sensor listening for [SignalK](https://signalk.org/) — reads temperature, humidity and battery data broadcast by cheap, popular BLE sensors and republishes it to SignalK paths, without ever opening a Bluetooth connection to the device. Relies only on _BLE Manager_, so requires SignalK v2.31 or above.
 
-For boats that have IP68 RuuviTag Pro outside and RuuviTag inside, it can be handy to republish the inside pressure value as if it were outside, for example when using the *Barometer Trend* plugin, so there's an option now to pick a device to publish the pressure also to `environment.outside.pressure`.
-
+For boats that have IP68 RuuviTag Pro outside and RuuviTag inside, it can be handy to republish the inside pressure value as if it were outside, for example when using the _Barometer Trend_ plugin, so there's an option now to pick a device to publish the pressure also to `environment.outside.pressure`.
 
 ## How it works
 
