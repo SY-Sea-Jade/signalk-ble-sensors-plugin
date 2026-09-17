@@ -50,6 +50,20 @@ module.exports = function (app) {
   return plugin;
 };
 
+// adv.name is frequently blank for these sensors — SwitchBot and RuuviTag
+// decode entirely from manufacturer/service data and don't depend on the BLE
+// advertised name, which many providers never surface anyway (it's typically
+// only present in a scan response, not the primary advertising packet). Drop
+// the name segment rather than showing a literal placeholder. RSSI is
+// appended as a live disambiguator: with a neighboring boat's identical
+// sensor model also in range, the stronger (less negative) signal is
+// generally the one actually on this boat.
+function formatDeviceLabel(d) {
+  const namePart = d.name ? `${d.name} — ` : "";
+  const rssiPart = d.rssi === undefined || d.rssi === null ? "" : ` · ${d.rssi}dBm`;
+  return `${namePart}${d.sensorTypeName} (${d.mac})${rssiPart}`;
+}
+
 function buildSchema(recognized) {
   const known = recognized.slice().sort((a, b) => a.mac.localeCompare(b.mac));
   const hasKnown = known.length > 0;
@@ -71,14 +85,7 @@ function buildSchema(recognized) {
               type: "string",
               title: "Device",
               enum: hasKnown ? known.map((d) => d.mac) : [""],
-              // adv.name is frequently blank for these sensors — SwitchBot and RuuviTag
-              // decode entirely from manufacturer/service data and don't depend on the
-              // BLE advertised name, which many providers never surface anyway (it's
-              // typically only present in a scan response, not the primary advertising
-              // packet). Drop the name segment rather than showing a literal placeholder.
-              enumNames: hasKnown
-                ? known.map((d) => (d.name ? `${d.name} — ${d.sensorTypeName} (${d.mac})` : `${d.sensorTypeName} (${d.mac})`))
-                : ["No recognised sensors detected yet"],
+              enumNames: hasKnown ? known.map(formatDeviceLabel) : ["No recognised sensors detected yet"],
             },
             name: {
               type: "string",
