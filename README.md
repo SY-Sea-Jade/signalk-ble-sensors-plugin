@@ -2,7 +2,7 @@
 
 ALPHA
 
-Passive BLE sensor listening for [SignalK](https://signalk.org/) — reads temperature, humidity and battery data broadcast by cheap, popular BLE sensors and republishes it to SignalK paths, without ever opening a Bluetooth connection to the device. Relies only on *BLE Manager*, so requires SignalK v2.31 or above.
+Passive BLE sensor listening for [SignalK](https://signalk.org/) — reads temperature, humidity and battery data broadcast by cheap, popular BLE sensors and republishes it to SignalK paths, without ever opening a Bluetooth connection to the device. Relies only on _BLE Manager_, so requires SignalK v2.31 or above.
 
 ## How it works
 
