@@ -38,14 +38,17 @@ Stock Xiaomi firmware (encrypted, not the ATC/pvvx custom firmware above) isn't 
 
 ## Published paths
 
-| Value            | Path                                    | Unit                                |
-| ---------------- | --------------------------------------- | ----------------------------------- |
-| Temperature      | `environment.<zone>.temperature`        | K                                   |
-| Humidity         | `environment.<zone>.humidity`           | ratio (0-1)                         |
-| Battery strength | `sensors.<name>_<mac>.battery.strength` | ratio (0-1), with low-battery zones |
-| Battery voltage  | `sensors.<name>_<mac>.battery.voltage`  | V                                   |
-| Signal strength  | `sensors.<name>_<mac>.RSSI`             | dB                                  |
-| Reachable        | `sensors.<name>_<mac>.reachable`        | boolean                             |
+| Value            | Path                              | Unit                                |
+| ---------------- | --------------------------------- | ----------------------------------- |
+| Temperature      | `environment.<zone>.temperature`  | K                                   |
+| Humidity         | `environment.<zone>.humidity`     | ratio (0-1)                         |
+| Battery strength | `sensors.<name>.battery.strength` | ratio (0-1), with low-battery zones |
+| Battery voltage  | `sensors.<name>.battery.voltage`  | V                                   |
+| Signal strength  | `sensors.<name>.RSSI`             | dB                                  |
+| Reachable        | `sensors.<name>.reachable`        | boolean                             |
+
+`<name>` is the sensor's name, lowercased and sanitized — give each registered sensor a distinct name, since
+two sensors with the same name will collide on these paths.
 
 These path and unit conventions are reused from
 [bt-sensors-plugin-sk](https://github.com/naugehyde/bt-sensors-plugin-sk) so this plugin's output lines up with dashboards or alarms already built against that plugin's paths.

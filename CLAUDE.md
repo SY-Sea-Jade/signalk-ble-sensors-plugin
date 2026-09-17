@@ -87,12 +87,17 @@ decode(adv) }` with no BLE or SignalK dependencies (trivially unit-testable agai
   the rest are best-effort community coverage.
 
 - **`lib/path-mapper.js`** — SignalK path templates, units, and battery-low zones, plus the `{zone}`/
-  `{macAndName}` substitution and delta-building logic. The path/unit conventions themselves (e.g.
-  `environment.{zone}.temperature` in Kelvin, `sensors.{macAndName}.battery.strength` as a 0-1 ratio with
+  `{sensorId}` substitution and delta-building logic. The path/unit conventions themselves (e.g.
+  `environment.{zone}.temperature` in Kelvin, `sensors.{sensorId}.battery.strength` as a 0-1 ratio with
   low-battery zones) are reused from
   [bt-sensors-plugin-sk](https://github.com/naugehyde/bt-sensors-plugin-sk)'s `plugin_defaults.json` so
   this plugin's output lines up with dashboards/alarms built against that plugin's conventions — but none
-  of its code, dependencies, or GATT/connection-based sensor support were carried over.
+  of its code, dependencies, or GATT/connection-based sensor support were carried over. `{sensorId}` is
+  just the sensor's `name`, sanitized and lowercased (no MAC) — `buildMetaDelta()` publishes a one-time
+  SignalK `meta` update per sensor (units/description/zones from `FIELD_PATHS`) alongside the first
+  `values` delta, since plugin-defined paths like these have no built-in SignalK-spec metadata and
+  without it webapps show raw numbers (e.g. a temperature of `287.04` with no indication it's Kelvin)
+  instead of converting/labelling them.
 
 - **`lib/sensor-manager.js`** — BLE Manager API integration glue: owns the `app.bleApi.onAdvertisement()`
   subscription, the recognized/configured device maps, the no-contact watchdog, and calls
@@ -110,8 +115,9 @@ in Bluetooth range) before it can be selected — the schema's `description` say
 seen yet the dropdown falls back to a single disabled-looking placeholder entry (an empty `enum` array is
 invalid JSON Schema).
 
-A registered sensor's `zone` (used in `environment.<zone>.*` paths) and `name` (used as `$source` and in
-`sensors.<name>_<mac>.*` paths) are free-text fields the user fills in after picking the MAC — the plugin
+A registered sensor's `zone` (used in `environment.<zone>.*` paths) and `name` (used as `$source` and,
+sanitized/lowercased, in `sensors.<name>.*` paths — so two registered sensors sharing a name will collide
+on these paths) are free-text fields the user fills in after picking the MAC — the plugin
 doesn't try to infer either.
 
 ### Why BLE-Manager-only
