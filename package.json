@@ -48,7 +48,7 @@
     "oxlint": "^1.75.0"
   },
   "engines": {
-    "node": ">=18.0.0",
+    "node": ">=22.0.0",
     "signalk-server": ">=2.31.0"
   },
   "signalk": {
