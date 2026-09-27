@@ -66,3 +66,7 @@ These path and unit conventions are reused from
 ## Relationship to bt-sensors-plugin-sk
 
 [bt-sensors-plugin-sk](https://github.com/naugehyde/bt-sensors-plugin-sk) is the more complete, actively maintained BLE sensor plugin for SignalK, supporting many more sensors including ones that need a GATT connection. It doesn't yet have support for the BLE Manager, so can suffer the same issues as other dedicated Bluetooth plugins. This plugin exists to cover the gap in the meantime for a narrower set of passive, advertisement-only sensors, and is expected to be retired once that support lands upstream.
+
+### Bluetooth Issues
+
+There's a long list of of advice and fixes for Bluetooth Low Energy on SignalK at the [eInk Label Bluetooth](https://signalk-einklabel.rhizomatics.org.uk/bluetooth/#ble-manager-readiness) page that covers Bluetti use too, although Bluetti isn't as tricky to work with as some eInk labels.
